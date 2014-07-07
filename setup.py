@@ -64,7 +64,6 @@ setuptools.setup(
         'console_scripts': CONSOLE_SCRIPTS,
         },
     install_requires=REQUIRED_PACKAGES,
-    namespace_packages=[_NAMESPACE],
     provides=[
         'apitools (%s)' % (_APITOOLS_VERSION,),
         ],
