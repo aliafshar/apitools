@@ -52,7 +52,7 @@ _NAMESPACE = 'apitools'
 _APITOOLS_VERSION = '0.2'
 
 setuptools.setup(
-    name='googleapitools',
+    name='google-apitools',
     version=_APITOOLS_VERSION,
     description='client libraries for humans',
     url='http://github.com/craigcitro/apitools',
