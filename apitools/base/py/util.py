@@ -5,6 +5,7 @@ import collections
 import httplib
 import os
 import types
+import urllib
 import urllib2
 
 from apitools.base.py import exceptions
@@ -14,6 +15,7 @@ __all__ = [
     'DetectGce',
     ]
 
+_RESERVED_URI_CHARS = r":/?#[]@!$&'()*+,;="
 
 def DetectGae():
   """Determine whether or not we're running on GAE.
@@ -65,3 +67,41 @@ def Typecheck(arg, arg_type, msg=None):
         msg = 'Type of arg is "%s", not "%s"' % (type(arg), arg_type)
       raise exceptions.TypecheckError(msg)
   return arg
+
+
+def ExpandRelativePath(method_config, params, relative_path=None):
+  """Determine the relative path for request."""
+  path = relative_path or method_config.relative_path
+
+  for param in method_config.path_params:
+    param_template = '{%s}' % param
+    # For more details about "reserved word expansion", see:
+    #   http://tools.ietf.org/html/rfc6570#section-3.2.2
+    reserved_chars = ''
+    reserved_template = '{+%s}' % param
+    if reserved_template in path:
+      reserved_chars = _RESERVED_URI_CHARS
+      path = path.replace(reserved_template, param_template)
+    if param_template not in path:
+      raise exceptions.InvalidUserInputError(
+          'Missing path parameter %s' % param)
+    try:
+      # TODO(craigcitro): Do we want to support some sophisticated
+      # mapping here?
+      value = params[param]
+    except KeyError:
+      raise exceptions.InvalidUserInputError(
+          'Request missing required parameter %s' % param)
+    if value is None:
+      raise exceptions.InvalidUserInputError(
+          'Request missing required parameter %s' % param)
+    try:
+      if not isinstance(value, basestring):
+        value = str(value)
+      path = path.replace(param_template,
+                          urllib.quote(value.encode('utf_8'), reserved_chars))
+    except TypeError as e:
+      raise exceptions.InvalidUserInputError(
+          'Error setting required parameter %s to value %s: %s' % (
+              param, value, e))
+  return path

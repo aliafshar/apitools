@@ -409,6 +409,11 @@ class BaseApiService(object):
 
   def __ConstructRelativePath(self, method_config, request, relative_path=None):
     """Determine the relative path for request."""
+    params = dict([(param, getattr(request, param, None))
+                   for param in method_config.path_params])
+    return util.ExpandRelativePath(method_config, params,
+                                   relative_path=relative_path)
+
     path = relative_path or method_config.relative_path
     # TODO(user): Why does the discovery document have pluses?
     # Figure this out.
